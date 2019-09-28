@@ -1,0 +1,262 @@
+---
+title: "Sep 24, 2019 Mixed Logit not scratch"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mixed Logit not scratch
+name: Jikhan Jeong
+ref: https://cran.r-project.org/web/packages/mlogit/vignettes/c5.mxl.html (mainly)
+ref: https://eml.berkeley.edu/books/choice2.html
+ref: Daly, Andrew, Stephane Hess, and Kenneth Train. 2012. “Assuring Finite Moments for Willingness to Pay in Random Coefficient Models.”    
+     Transportation 39 (1): 19–31. https://doi.org/10.1007/s11116-011-9331-3.
+ref: León, Gianmarco, and Edward Miguel. 2017. “Risky Transportation Choices and the Value of a Statistical Life.” American Economic Journal: 
+     Applied Economics 9 (1): 202–28. https://doi.org/10.1257/app.20160140.
+
+
+```{r}
+setwd( "C:/Users/jikhan.jeong/Documents/R/intro econometrics")
+getwd()
+```
+
+```{r}
+library('mlogit')
+data("Train", package = "mlogit")
+
+```
+
+# Multinomial Logit
+- need to see the data structure
+
+```{r}
+Tr <- mlogit.data(Train, shape = "wide", choice = "choice",
+varying = 4:11, sep = "_", id.var = "id",
+opposite = c("price", "comfort", "time", "change"))
+```
+
+```{r}
+Tr$price <- Tr$price / 100 * 2.20371
+Tr$time <- Tr$time / 60
+Train.ml <- mlogit(choice ~ price + time + change + comfort | - 1, Tr) # -1 for without constant
+summary(Train.ml)
+```
+
+```{r}
+coef(Train.ml)[- 1] # without the first coefficient
+```
+```{r}
+coef(Train.ml)[1] # price coefficient
+```
+
+We can get the monetary values as follows:
+
+# interpretation :
+
+* We obtain the value of 26 euros for an hour of traveling 
+* 5 euros for a change 
+* 14 euros to travel in a more comfortable class
+
+```{r}
+coef(Train.ml)[- 1] / coef(Train.ml)[1]
+```
+
+# Mixed logit : 3 random parameters without correlation
+
+1. time
+2. change 
+3. comfort
+
+no constnat -1,
+using dataset Tr
+panel data
+random parameter = rpar, n = normal distribution
+R = random draw
+correlation between random parapmeters
+halton method 
+optimization method = bhhh
+
+```{r}
+Train.mxlu <- mlogit(choice ~ price + time + change + comfort | - 1, Tr,
+panel = TRUE, rpar = c(time = "n", change = "n", comfort = "n"), R = 100,  ## n = means normal distribution, rpar = random parameters
+correlation = FALSE, halton = NA, method = "bhhh") ## corrleation is not TRUE = no correlation
+```
+
+the results contains 3 more variables related to standard deviation of each random coefficient variables
+
+[1] "price" "time" "change" "comfort"
+[5] "sd.time" "sd.change" "sd.comfort"
+
+```{r}
+summary(Train.mxlu)
+```
+
+# Allowing corrleation among the raondom coefficients
+
+ 6 parameters which are the elements of the Choleski decomposition of the covariance matrix of the three random parameters.
+
+ [1] "price" "time"
+ [3] "change" "comfort"
+ [5] "chol.time:time" "chol.time:change"
+ [7] "chol.change:change" "chol.time:comfort"
+ [9] "chol.change:comfort" "chol.comfort:comfort
+ 
+```{r}
+Train.mxlc2 <- update(Train.mxlu, correlation = TRUE) ## corrleation is true
+summary(Train.mxlc2)
+```
+
+# Preference Space using rpar with model Train.mxlc2 = random coefficient corrleated model
+
+* Marginal utility of time 
+ summary(marg.ut.time) displays the unconditional distribution of the marginal utility of time
+```{r}
+marginal_utility_of_time <- rpar(Train.mxlc2, "time")
+summary(marginal_utility_of_time)
+```
+# WTP space
+
+* the marginal utility by dividing it by the coefficient of a covariate expressed in monetary value (a price for example), 
+  taken as a non random parameter. 
+
+* use the norm argument of rpar
+
+The median value (and the mean value as the distribution is symmetric) of transport time is about 33 euros
+
+```{r}
+wtp.time <- rpar(Train.mxlc2, "time", norm = "price") # fixed with price, random parameter with time
+summary(wtp.time)
+```
+*In case of correlated random parameters, as the estimated parameters can’t be directly interpreted*
+
+# vcov.mlogit = covariance matrix of correleated variables (default)
+
+```{r}
+vcov(Train.mxlc2, what ="rpar")
+```
+
+```{r}
+summary(vcov(Train.mxlc2, what ="rpar"))
+```
+
+# vcov.mlogit = correlation matrix of correleated variables (default)
+- standard devations on the diagonal
+
+```{r}
+vcov(Train.mxlc2, what = "rpar", type = "cor")
+```
+
+```{r}
+summary(vcov(Train.mxlc2, what = "rpar", type = "cor"))
+```
+
+# the correlation of the correlated random parameters coefficients
+
+```{r}
+cor.mlogit(Train.mxlc2)
+```
+
+# the covariance of the correlated random parameters
+
+```{r}
+cov.mlogit(Train.mxlc2)
+```
+
+# Standard deviaton of the corrleated random parameters
+
+```{r}
+stdev(Train.mxlc2)
+```
+
+# restriction of correlated random parameters
+
+from 3 random parameters(time, change, comfort) to 2 randome paramters (time, change)
+
+*update* using this commend
+
+```{r}
+Train.mxlc2_restricted <- update(Train.mxlc2, correlation = c("time", "comfort"))
+```
+
+restricted correlated random parameter covariance matrix
+```{r}
+vcov(Train.mxlc2_restricted, what = "rpar", type = "cov")
+```
+
+```{r}
+summary(vcov(Train.mxlc2_restricted, what = "rpar", type = "cov"))
+```
+
+restricted correlated random parameter covariance matrix
+```{r}
+vcov(Train.mxlc2_restricted, what = "rpar", type = "cor")
+```
+
+```{r}
+summary(vcov(Train.mxlc2_restricted, what = "rpar", type = "cor"))
+```
+
+# Hypothesis test for the presence of random coefficients and their correlation 
+
+* 3 nested models requires
+* 1. no random coefficient
+* 2. a random coefficient without corrleation
+* 3. a random coefficient with corrleation
+
+# check no correlated random effect
+* multinomial vs corrleated random effect model
+* Train.ml = multinomial (no random effect)
+* Train.mxlc2 = corrleated random effect model
+
+```{r}
+library(car) # for hypothesis test
+```
+LR test
+Wald Test
+Likelihood test
+Score test
+```{r}
+statpval <- function(x){
+    if (inherits(x, "anova")) 
+        result <- as.matrix(x)[2, c("Chisq", "Pr(>Chisq)")]
+    if (inherits(x, "htest")) result <- c(x$statistic, x$p.value)
+    names(result) <- c("stat", "p-value")
+    round(result, 3)
+}
+lr.mxc <- lrtest(Train.mxlc2, Train.ml)
+wd.mxc <- waldtest(Train.mxlc2)
+lh.mxc <- linearHypothesis(Train.mxlc2, c("chol.time:time = 0",
+                                          "chol.time:change = 0", 
+                                          "chol.time:comfort = 0", 
+                                          "chol.change:change = 0",
+                                          "chol.change:comfort = 0", 
+                                          "chol.comfort:comfort = 0"))
+sc.mxc <- scoretest(Train.ml, 
+                    rpar = c(time = "n", change = "n",comfort = "n"), 
+                    R = 100, 
+                    correlation = TRUE, 
+                    halton = NA, 
+                    panel = TRUE)
+
+sapply(list(wald = wd.mxc, lh = lh.mxc, score = sc.mxc, lr = lr.mxc),statpval)
+```
+# Long format data
+
+
+
+```{r}
+data("ModeCanada", package = "mlogit")
+head(ModeCanada)
+```
+
+
+```{r}
+class(data("ModeCanada", package = "mlogit"))
+```
+
+
+
+
+
