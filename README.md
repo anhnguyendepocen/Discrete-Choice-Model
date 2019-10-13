@@ -1,7 +1,7 @@
 # Discrete-Choice-Model
 Econometrics for discrete choice    
 
-Plan to do (13 Oct, 2019)  
+Plan to do (updated: 13 Oct, 2019)  
 
 o. binary logit scrach (Done)  
 1. binary probit scratch done (Done)  
@@ -28,7 +28,8 @@ ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-re
 * pvalue for z-score and t-test  
 ref: https://www.cyclismo.org/tutorial/R/pValues.html  
 
-# *optim* : General-purpose optimization : "optimization method is a big matter"
+# *optim* : General-purpose optimization 
+* keep in mind that optimization method is a big matter
 
 * optim(par, fn, gr, method =)
 
