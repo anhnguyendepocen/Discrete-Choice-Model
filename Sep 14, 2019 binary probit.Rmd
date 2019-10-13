@@ -1,0 +1,325 @@
+---
+title: "Oct 12, 2019 Binary Probit Scratch using R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Name: Jikhan Jeong  
+Ref: Econometric Modelling with Time Series  
+
+This is for scratch of binary probit regression (Done)
+Now, I will move to ordered probit and mixed logit
+
+1)**chunk n: Ctrl + Alt + I**  
+2)**knit: Ctrl + Shift + k**  
+3)**run: Ctrl + Enter**  
+
+```{r}
+setwd('C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/New folder')
+```
+
+```{r}
+getwd()
+```
+```{r}
+rm (list = ls(all=TRUE))
+graphics.off()
+```
+
+**Load required functions -  inv, figure, seqa**
+```{r}
+source("C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/New folder/EMTSUtil.R")
+```
+
+**Unrestricted Probit negative log-likelihood function**
+**prom:** the function pnorm returns the integral from −∞ to q of the pdf of the normal distribution where q is a Z-score.  
+Simply, this is a cumulative normal distribution
+one tail probability in 50%
+```{r}
+pnorm(0) # 0.5 probability
+```
+one tail probabiltiy in 97.5%
+```{r}
+pnorm(1.96)
+```
+
+# The unrestricted Log likelihood contains all covaritate
+
+%*% : matrix multiplication 
+
+**example** 
+A <- matrix (c(1,3,4, 5,8,9, 1,3,3), 3,3)
+B <- matrix (c(2,4,5, 8,9,2, 3,4,5), 3,3)
+C = A %*% B
+
+* a Bernoulli distribution
+
+$$ f(y;\theta) = \phi_{t}^{y_{t}}(1-\phi_{t})^{1-y_{t}}$$
+
+The cumulative normal distribution = pnorm in r
+
+
+$$ \phi_{t} = \phi(\beta \times X) = Pr(y=1) = \int_{-\infty}^{ \frac{\beta \times X}{\sigma}}\frac{1}{\sqrt{2\pi}}\exp[-\frac{s^2}{2}ds],\,\,\, \sigma =1 $$
+$$ 1-\phi_{t} = Pr(y=0) $$
+
+*The log-likelihood function for a sample N observations is
+
+$$ \ln L_{n}(\theta) = \frac{1}{n}\sum_1^{n}[y_t\ln\phi_t+(1-y_t)\ln(1-\phi_t)]$$
+
+
+```{r}
+lprobit <- function (b,y,x) {
+  f  <- pnorm(x %*% b) # culumative pdf from -oo the values
+  lf <- -mean( y*log(f) + (1 - y)*log(1 - f) ) # negative log-likelihood
+  return (lf)
+}
+```
+
+
+**Restricted Probit negative log-likelihood function **
+
+without covariate x
+
+```{r}
+l0probit <- function(b,y) {  
+  f  <- pnorm(b) 
+  lf <- -mean( y*log(f) + (1 - y)*log(1 - f) )
+  return(lf)
+}
+```
+
+input the data from usmoney data
+```{r}
+usmoney <- as.matrix(read.table("C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/New folder/usmoney.dat"))
+target  <- usmoney[,2]
+bin     <- usmoney[,4]
+fomc    <- usmoney[,8]
+spread6 <- usmoney[,20]
+inf     <- usmoney[,23]
+gdp     <- usmoney[,28]
+```
+
+Reverse the spread so it is the Federal funds rate less 6-month Treasury bill rate  
+put - sign on spread6
+
+```{r}
+spread <- -spread6 
+```
+
+Redefine the target rate based on the consolidated series 
+constructed in Hamilton and Jorda (2002)       
+  
+```{r}  
+target_adj <- cumsum( c(target[1], bin[2:length(bin)] ))
+length(target_adj)
+```  
+## to do Sep 14, 2019
+
+what is seqa
+waht is cbind
+what is optim
+
+```{r}  
+figure()
+plot(seqa(1984+5/52,1/52,length(target_adj)),target_adj, type="l",
+       main="Federal Funds target rate(%) from 1984 to 1997", 
+       ylab = "Federal Funds Rate (%)",
+       xlab = "Time")
+```
+  
+Choose data based on fomc days
+
+```{r}
+ind       <- fomc == 1
+data      <- cbind(bin, spread, inf, gdp)
+data_fomc <- data[ind,]
+```
+
+Dependent and independent variables 
+**cat** Use cat to print information to an end-user from a function. 
+
+```{r}
+y <- as.numeric(data_fomc[,1] > 0.0)
+t <- length(y)
+x <- cbind(rep(1, t), data_fomc[,2:4])
+```
+
+```{r}
+# class(y)
+# class(x) # x contains constant = 1 
+# df <-cbind(y,x)
+# write.csv(df, 'binary_probit.csv') # for comparing stata 
+```
+
+
+#Estimate model by OLS (ie ignore that the data are binary)
+
+$$ \sigma = \sqrt{E(X-\mu)^2} = \sqrt{E[X^2]-(E[X]^2)} $$
+
+```{r}
+reg <- lm(y ~ x - 1) # -1 no constant
+summary(reg)
+b <- reg$coef
+u <- reg$residuals # error
+s <- sqrt( mean(u^2) ) # squaredeviation of X
+s
+``` 
+
+#Estimation the unrestricted probit regression model by MLE
+
+* I don't know why the estimated value is different from that of glm probit 
+* -> The reason is optimization method,
+
+
+# *optim* : General-purpose optimization : "optimization method is a big matter"
+
+* optim(par, fn, gr, method =)
+
+* par = Initial values for the parameters to be optimized over.
+
+* fn = a function to be minimized, this is the reason why using negative LL in the above
+
+* *"BFGS"* is a quasi-Newton method
+
+* *"Nelder-Mead"* Nelder and Mead (1965), that uses only function values and is robust but   relatively slow. It will work reasonably well for non-differentiable functions.
+
+```{r}
+# theta0 <- b/s assumes s=1
+  
+theta0 <- b/s
+
+estResults <- optim(theta0, lprobit, x=x, y=y, method="Nelder-Mead", hessian=T)
+  
+theta1 <- estResults$par
+l1 <- estResults$val
+h <- estResults$hessian
+  
+cov <- (1/t)*inv(h)
+cov
+variance  = diag(cov)
+
+standard.error = sqrt(variance) # standard.error of each variables
+standard.error
+
+
+
+l1 <- -l1
+  
+cat('\nUnrestricted log-likelihood function =     ',l1)
+cat('\nT x unrestricted log-likelihood function = ',t*l1)
+  
+cat('\n\nUnrestricted parameter estimates')
+cat('\n',theta1)
+# cat('\n\ covariance matrix',cov)
+
+```
+
+# z-value calcuation
+* in here, I just check whether z-value for constant is correct or not.
+ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/
+```{r}
+z.test.costant =  -3.858994/ 1.7103344
+z.test.costant 
+```
+
+# p-value calcuation
+* ref: https://www.cyclismo.org/tutorial/R/pValues.html
+
+```{r}
+2*pnorm(-abs(z.test.costant ))
+```
+Yes, all the coefficient, standard error, and z-score and p-value are correct.
+
+
+# The result of stata and glm r function is similar and
+this is difference with the above unrestricted probit regression.
+Why?
+
+
+![stata result](C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/binary_probit.png)
+
+
+```{r}
+myprobit <- glm(y ~ x -1, family = binomial(link = "probit"))
+summary(myprobit)
+```
+
+
+# Estimate the restricted probit regression model by MLE     
+  
+```{r}
+  theta0 <- qnorm(mean(y),0,1) # quantitle, mean, sd
+  estResults <- optim(theta0, l0probit, y=y, method="BFGS", hessian=T)
+  
+  theta <- estResults$par
+  l0 = estResults$val
+  h <- estResults$hessian
+  
+  l0 <- -l0
+  cat('\n\nRestricted log-likelihood function =     ',-l0)
+  cat('\nT x restricted log-likelihood function = ',-t*l0)
+  
+  cat('\n\nRestricted parameter estimates')
+  cat('\n', theta)
+```
+
+  
+#  Likelihood ratio test  
+
+```{r}
+
+  lr <- -2*t*(l0 - l1)
+  
+  cat('\n\nLR Statistic         = ',lr)
+  cat('\np-value              = ',1-pchisq(lr,ncol(x)-1))
+  
+  cat('\n')
+
+```
+
+  
+# Wald test  
+
+```{r}
+
+  r <- matrix(c(0,   1,   0,   0,
+                0,   0,   1,   0,
+                0,   0,   0,   1), byrow=T, nrow=3)
+  
+  q <- rbind(0,0,0)
+  
+  wd <- t( (r %*% theta1 - q) ) %*% inv(r %*% cov %*% t(r)) %*% (r %*% theta1 - q)
+  
+  cat('\nWald Statistic       = ',wd)
+  cat('\np-value              = ',(1-pchisq(wd,ncol(x)-1)))
+  
+  cat('\n')
+  
+
+```
+
+# LM test of the joint restrictions  
+
+```{r}
+
+  u  <- y - mean(y)
+  b  <- lm(u ~ x - 1)$coef
+  e  <- u - x %*% b
+  r2 <- 1 - (t(e) %*% e)/(t(u) %*% u)
+  lm <- t*r2
+  
+  cat('\nRegression estimates = ', b)
+  cat('\nSample size (t)      = ', t )
+  cat('\nR2                   = ', r2 )
+  cat('\nLM Statistic         = ',lm)
+  cat('\np-value              = ',1-pchisq(lm,ncol(x)-1)) 
+
+
+```
+
+ 
+```
+
