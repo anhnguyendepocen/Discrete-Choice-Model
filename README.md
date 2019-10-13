@@ -3,9 +3,12 @@ Econometrics for discrete choice
 
 Plan to do (updated: 13 Oct, 2019)  
 
-o. binary logit scrach (Done)  
+0. binary logit scrach (Done)  
+0.1 Multinomial logit scratch (Done)
+0.2 Multinomial logit with mlogit (Done)
 1. binary probit scratch done (Done)  
 2. order probit scratch (Oct, 2019)  
+2.1 Boostraping for CI in R (Oct, 2019)
 3. mixed logit with mlogit for application with mlogit in R (Done)  
 3.1 mixed logit scratch with matlab (Oct, 2019)  
 4. mixed ordered probit scratch (when the price is log normal and error term must follow normal) with Gauss, (Oct)  
