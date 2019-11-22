@@ -31,6 +31,11 @@ ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-re
 * pvalue for z-score and t-test  
 ref: https://www.cyclismo.org/tutorial/R/pValues.html  
 
+# Shurtcut in R markdown 
+1)**chunk n: Ctrl + Alt + I**    
+2)**knit: Ctrl + Shift + k**    
+3)**run: Ctrl + Enter**    
+
 # *optim* : General-purpose optimization (in R)
 * keep in mind that optimization method is a big matter
 
