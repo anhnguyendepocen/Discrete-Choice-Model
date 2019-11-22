@@ -4,8 +4,8 @@ Econometrics for discrete choice Model.
 Plan to do (updated: 21 Nov, 2019)  
 
 0. binary logit scrach (Done)  
-0.1 Multinomial logit scratch (Done)
-0.2 Multinomial logit with mlogit (Done)
+0.1 Multinomial logit scratch (Done)  
+0.2 Multinomial logit with mlogit (Done)  
 1. binary probit scratch done (Done)  
 2. order probit scratch (Done)  
 2.1 Boostraping for CI in R (Oct, 2019)
@@ -56,14 +56,14 @@ ref: https://www.cyclismo.org/tutorial/R/pValues.html
 
 
 # z-value calcuation in R
-ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/  
+Ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/  
 (ex) in R  
 z.test.costant =  -3.858994/ 1.7103344  
 z.test.costant 
 
 
-# p-value calcuation in R
-* ref: https://www.cyclismo.org/tutorial/R/pValues.html  
-2*pnorm(-abs(z.test.costant ))
+# p-value calcuation in R  
+Ref: https://www.cyclismo.org/tutorial/R/pValues.html    
+2*pnorm(-abs(z.test.costant))
 
 
