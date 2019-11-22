@@ -36,6 +36,9 @@ ref: https://www.cyclismo.org/tutorial/R/pValues.html
 2)**knit: Ctrl + Shift + k**    
 3)**run: Ctrl + Enter**    
 
+# Image Insert in R Markdown
+
+
 # *optim* : General-purpose optimization (in R)
 * keep in mind that optimization method is a big matter
 
