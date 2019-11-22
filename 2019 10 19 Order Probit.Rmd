@@ -1,0 +1,455 @@
+---
+title: "2019 10 19 Order Probit"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+* Name: Jikhan Jeong
+
+* Reference: https://www.cambridge.org/features/econmodelling/
+
+* Reference: https://www.nber.org/papers/w7847
+
+* Published: Hamilton, James D. and Oscar Jorda. **"A Model Of The Federal Funds Rate Target,"** Journal of Political   Economy, 2002, v110(5,Oct), 1135-1167
+
+# Shurtcut in R markdown   
+1)**chunk n: Ctrl + Alt + I**      
+2)**knit: Ctrl + Shift + k**      
+3)**run: Ctrl + Enter**       
+
+
+* The ordered probit of dependent variable is a dummy variable in 
+ordered rank as follows:
+
+* n = decision maker
+
+* The main idea is that there is a latent countinuous metric underling the ordinal dependent variables observed by the researcher.
+
+* Thresholds partition the real line into a series of regions corresponding to the variouse ordinal categories. 
+
+$$ 
+y_{n} = d_{n} = x_{n}\beta + e_n, e_n \sim N(0,1), \forall n = 1....N, \, d_n \subset {0,1,2,3,4} -(1) 
+$$
+# Dependent variable are ordinal category variable in here denote as $d_i$
+
+$$ 
+d_{n}= \left\{\begin{matrix}
+0 : y_{n} = -0.5  \\
+1 : y_{n} = -0.25 \\
+2 : y_{n} = 0.00  \\
+3 : y_{n} = 0.25  \\
+4 : y_{n} = 0.50 \\
+\end{matrix}\right. 
+$$   
+
+# Probability of dependent variable is 0
+
+$$ 
+p(d_{n}=0) = P[-oo<d_{n}<\mu_{0}] \\
+=  P[d_{n}<\mu_{0}] \,-plug \,(1)\\
+=  p(x_{n}b+e_{n}<\mu_{0})\\
+=  p(e_{n}<\mu_{0}-x_{n}b) \\
+=  \Phi(\mu_{0}-x_n{b})
+$$
+
+
+
+# C is the intercepts of each regime
+
+$$ 
+c_{0} <  c_{1} < c_{2} < c_{3} 
+$$
+
+
+# Normal standard distrubiton of cdf based on different dependent variables
+
+$$
+d_{t}= \left\{\begin{matrix}
+\Phi_{0,n} = \Pr(d_{n}=0) = \Phi(c_0 - x_n\beta) \\
+\Phi_{1,n} = \Pr(d_{n}=1) = \Phi(c_1 - x_n\beta) - \Phi(c_0 - x_n\beta) \\
+\Phi_{2,n} = \Pr(d_{n}=2) = \Phi(c_2 - x_n\beta) - \Phi(c_1 - x_n\beta) \\
+\Phi_{3,n} = \Pr(d_{n}=3) = \Phi(c_3 - x_n\beta) - \Phi(c_2 - x_n\beta) \\
+\Phi_{4,n} = \Pr(d_{n}=4) = \Phi(c_4 - x_n\beta) - \Phi(c_3 - x_n\beta) \\
+\end{matrix}\right.
+$$
+# The log-likelihood function for a sample size N is
+
+$$
+\begin{align*}
+\ln L_{N}(\theta) = & \frac{1}{N}\sum_{n=1}^{N}[d_{0,n}\ln\Phi_{0,n}+ 
+d_{1,n}\ln\Phi_{1,n}+ d_{2,n}\ln\Phi_{2,n}+ d_{3,n}\ln\Phi_{3,n}+ d_{4,n}\ln\Phi_{4,n}
+]\\
+\theta = & {\beta, c_0,c_1,c_2,c_3} 
+\end{align*}
+
+$$
+
+# Code for setting
+```{r}
+
+rm (list = ls(all=TRUE)) #rm(list=ls()) removes all objects from the current workspace (R memory)
+graphics.off() # shuts down all open graphics devices
+
+```
+
+## Inverse Matrix
+```{r}
+#--------------------------------------------------------------------
+# Matrix inverse function
+# Wrapper function for computing matrix inverse
+#--------------------------------------------------------------------
+inv <- function (A) {
+  return(solve(A)) # solve(A) = Inverse Matrix
+}
+# Solve: This generic function solves the equation a %*% x = b for x, where b can be either a vector or a matrix. in here solve(a) = I^{-1}, ax=I, x=solve(a)
+# Ref: https://www.rdocumentation.org/packages/base/versions/3.6.1/topics/solve
+```
+
+## Example. Solve Example for calculating inverse matrix
+```{r}
+a_ex =matrix(c(1,2,3,4), nrow=2, ncol=2, byrow=TRUE)
+c=solve(a_ex)
+a_ex%*%c
+```
+
+c is the inverse matrix of a by obtaining c=solve(a)
+
+```{r}
+c
+```
+
+The invrse matrix of a by using inv(a) which defined in the above inv function
+the results indicates that the same reults with inv(a) = c as follows
+
+```{r}
+inv(a_ex)
+```
+
+# Example: rowSums
+
+* Sum values of Raster objects by row or column.
+* Ref: https://www.rdocumentation.org/packages/raster/versions/3.0-7/topics/rowSums
+
+```{r}
+(a_ex <-matrix(c(1:10), nrow=2, ncol=5, byrow=TRUE))
+class(a_ex)
+as.matrix(a_ex)
+rowSums(a_ex)
+```
+
+
+* (example) Basic for pnrom and LL form 
+```{r}
+(a1<-pnorm(0,0,1)) # 0
+(a2<-pnorm(1,0,1) -a1) # 1
+(a3<-pnorm(2,0,1) -a1 -a2) # 2
+(a4<-1-a1-a2-a3)
+sum(a1,a2,a3,a4) # cdf of sum is 1
+(a<-cbind(a1,a2,a3,a4)) # qnorm of each label
+(log(a))
+(dependent_variable_mark <- c(1,1,1,1)) # actually this should be dummy in real situation but just for practice
+(t_dependent_variable_mark <-dependent_variable_mark*log(a))
+(log_liklihood <--mean(t_dependent_variable_mark))
+```
+
+# The log-likelihood function for a sample size N is
+
+$$
+
+\begin{align*}
+\ln L_{N}(\theta) = & \frac{1}{N}\sum_{n=1}^{N}[d_{0,n}\ln\Phi_{0,n}+ 
+d_{1,n}\ln\Phi_{1,n}+ d_{2,n}\ln\Phi_{2,n}+ d_{3,n}\ln\Phi_{3,n}+ d_{4,n}\ln\Phi_{4,n}
+]\\
+\theta = & {\beta, c_0,c_1,c_2,c_3} 
+\end{align*}
+
+$$
+
+# Unrestricted Probit *negative*  log-likelihood function 
+* reference: (about pnrom) : http://seankross.com/notes/dpqr/
+```{r}
+lprobit <- function(b,x,d){ # b =coefficient, x = feature, 
+  # Cut off points = regime change
+  c<- b[1:4] # cut points parameters (unknown)
+  
+  # Regression part excluding the intercepts
+  xb <- x[,2:4] %*% b[5:7] # x is feature data and b is coefficient
+  
+  # Cut off points
+  f1 <- pnorm(c[1] - xb,0,1) # pnorm(0,0,1) CDF of standard normal = 0.5
+  f2 <- pnorm(c[2] - xb,0,1) -f1
+  f3 <- pnorm(c[3] - xb,0,1) -f1 -f2
+  f4 <- pnorm( c[4] - xb,0,1) - f1 - f2 - f3
+  f5 <- 1 - f1 - f2 - f3 - f4   # the sum of cdf = 1
+  f <-cbind(f1, f2, f3, f4, f5) # matrix
+  
+  # Negative Log-Likelihood fuction -> to minimize negative LL = maximization of LL
+  tp <- d*log(f) # d = dependent variables with ordered dummay type {d=0, d=1,....d=4}
+  lf <- -mean(rowSums(tp)) # negative log likelihood for minimization rather than maximization with positive log likelihood
+  return(lf)
+}
+```
+
+* apply function
+Ref: https://www.guru99.com/r-apply-sapply-tapply.html
+
+apply(X, MARGIN, FUN)
+x: an array or matrix
+MARGIN:  take a value or range between 1 and 2 to define where to apply the function, 1=rows, 2=columns, c(1,2)= all, 
+FUN: tells which function to apply
+
+
+```{r}
+(m1 <- matrix(C<-(1:10),nrow=5, ncol=6))
+(a_m1 <- apply(m1, 2, sum)) # apply(matrix, margin =2 = columns, fucntion = sum) = calcuating column sum  
+```
+
+
+# Restricted Probit *negative*  log-likelihood function : without covariate: only critical points without covariates 
+```{r}
+l0probit <- function(b,d) { # b = coefficient = unknown parameter = cutting points = scalars = vector =~ matrix, more simpler code than the unrestriced case
+  # d = multilabel
+  # b = b[1,4] =cutting points
+  # t = sample size, t(matrix) = transpose, I don't know how it works in this case
+  # Cut off points
+  c<- b[1:4]
+  
+  f1 <- pnorm(c[1]-0,0,1) # -0 for point out that there is no xb in here
+  f2 <- pnorm(c[2]-0,0,1) - f1
+  f3 <- pnorm(c[3]-0,0,1) - f1 - f2
+  f4 <- pnorm(c[4]-0,0,1) - f1 - f2 - f3
+  f5 <- 1 - f1 - f2 - f3 - f4
+  f  <- cbind(f1, f2,  f3,  f4,  f5)
+    
+  # Log-likelihood function 
+  
+  #tp <- t(apply(d, 1, '*', log(f))) # dependent variable * log (f) transpose (apply function), 1= rows function * multiplication with log(f) ust transpos(d*log(f))
+  #tp <- d%*%log(f)
+  tp <- d%*%t(log(f)) # d is n = sample size x 5 | log(f) = 1 x 5, t(log(f)) = 5 x 1 | d*log(f) = 1 x 1 in each point, then column sum
+  # lf <- -mean( rowSums(tp) )
+  # print(tp)
+  lf <- -mean(rowSums(tp))
+  return(lf)
+}
+```
+
+# Ordered Probit with data load
+Ref:  The data file is from the Hamilton and Jorda (2002) data set.
+
+# Dataload
+```{r}
+setwd("C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/New folder/")
+getwd()
+```
+
+```{r}
+usmoney <- as.matrix(read.table("C:/Users/jikhan.jeong/Documents/R/Econ_Modelling_R/New folder/usmoney.dat"))
+```
+
+
+
+```{r}
+target  <- usmoney[,2]
+bin     <- usmoney[,4]  # to data
+fomc    <- usmoney[,8]
+spread6 <- usmoney[,20]
+spread <- -spread6      # to data
+inf     <- usmoney[,23] # to data
+gdp     <- usmoney[,28] # to data
+  
+ind       <- fomc == 1  # Boolen operation Ture and False based on FOMC ==1
+
+# Choose data based on fomc days
+data      <- cbind(bin, spread, inf, gdp)
+
+#       bin     spread        inf        gdp 
+# 0.0000000 -0.2900000  0.0489853  0.4000000 
+
+data_fomc <- data[ind,] # sliceing fomc ==1 rows
+# data_fomc
+# > length(data)
+# [1] 2772
+# > length(data_fomc) # data_fomc is a subset of data that meet the condition "fomc ==1" condition
+# [1] 424
+
+# Dependent and independent variables 
+y <- data_fomc[,1] # first column is dependent variagle
+n<- length(y) # sample size
+x <-cbind(rep(1,n), data_fomc[,2:4]) # rep : replicates the values in x. # this is for constant 
+# rep(1,n) # for constant
+
+  # Create dummy variables for each interest rate change
+d1 <- as.numeric(y == -0.50) # true 1 if not 0, example  1 = as.numeric(1 == 1),  0 = as.numeric(1 == 0) making dummy
+d2 <- as.numeric(y == -0.25)
+d3 <- as.numeric(y ==  0.00)
+d4 <- as.numeric(y ==  0.25)
+d5 <- as.numeric(y ==  0.50)
+d  <- cbind(d1, d2, d3, d4, d5)
+
+```
+
+```{r}
+# raw_data <-cbind(y,x)
+# dim(raw_data)
+# write.csv(raw_data,'nov_21_2019_order_probit_raw_data.csv')
+```
+
+# Estimation
+
+
+```{r}
+# Estimate model by OLS (ie ignore that the data are ordered
+reg <- lm(y ~ x - 1)   # no constant
+b <- reg$coef          # coefficient
+u <- reg$residuals     # residual
+s <- sqrt( mean(u^2) ) # mean square error
+summary(reg)
+print(s)
+```
+
+
+# Unresctricted Ordered Probit
+```{r}
+# Compute the unconditional probabilities of each regime    
+# d = multilabel
+p <- cumsum(colMeans(d)) # for initial value of cutting points
+
+# > colMeans(d) 
+#        d1         d2         d3         d4         d5 
+# 0.02830189 0.10377358 0.77358491 0.05660377 0.03773585 
+# > cumsum(colMeans(d))
+#         d1         d2         d3         d4         d5 
+# 0.02830189 0.13207547 0.90566038 0.96226415 1.00000000 
+
+# Estimate the unrestricted ordered probit regression model by MLE   
+theta0 <- c(qnorm(p[1:4],0,1), b[2:4]/s ) #qnorm(p[1:4],0,1) is for cutting point value
+# theta0 # intial values
+  
+# minimization
+estResults <- optim(theta0, lprobit, x=x, d=d, method="BFGS", hessian=T) # BFGS or Nelder-Mead
+# theta0 = initial value
+# lprobit = nagative probit ll
+# x = independent
+# d = multilabel
+# method = optimization methods
+# Hessian = True
+
+theta1 <- estResults$par # coefficient
+l1 <- estResults$val # nagative log likelihood
+h <- estResults$hessian
+
+cat('\nUnrestricted parameter estimates')
+cat('\n', theta1 )
+
+cov <- (1/n)*inv(h) # covariance matrix
+sd_matrix <-as.matrix(sqrt(cov))
+sd_matrix
+
+variance  = diag(cov) # variance of each independent variable
+
+standard.error = sqrt(variance) # standard.error of each variables
+cat('\n\n standard error of coeff=    ',standard.error)
+
+cat('\n\nCovariance Matrix of Unrestricted =     ',cov)
+cat('\n\nStandard error of each variable of Unrestricted =     ',standard.error)
+
+l1 <- -l1 # loglikelihood = (-1) x negative loglikelihood 
+
+cat('\n\nUnrestricted log-likelihood function =     ',l1)
+cat('\n T x unrestricted log-likelihood function = ',n*l1)
+
+```
+# z-state
+* Ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/    
+* Diagonal element of covraiance matrix is variance of coefficient  
+* cov <- (1/n)*inv(h) # covariance matrix  
+* variance  = diag(cov) # variance of each independent variable  
+* standard.error = sqrt(variance) # standard.error of each variables  
+
+$$
+X = \frac{\hat{\beta}-0}{\hat{\sigma_{\hat{\beta}}}}=\frac{\hat{\beta}}{\hat{\sigma_{\hat{\beta}}}}
+$$
+
+
+# Z-score for var1 (=xspread)
+sd = 0.3381985
+coefficient = 0.33819846
+
+```{r}
+sd = 0.3381985
+coef = 1.650514
+(z.test.var1 =  coef/sd)
+```
+
+# p-value calcuation
+* Ref: https://www.cyclismo.org/tutorial/R/pValues.html  
+
+```{r}
+# options("scipen"=-100, "digits"=4) for -e format
+options("scipen"=100, "digits"=4)
+2*pnorm(-abs(z.test.var1 ))
+```
+
+
+# unrestrictued stata output : (stata) oprobit y x1 x2 x3, nolog 
+* stata using BFGS optimization 
+
+![stata](nov_21_2019_ordered_probit_stata.jpg)
+
+# Estimate the restricted probit regression model by MLE     
+
+```{r}
+
+  theta0 <- qnorm(p[1:4],0,1) # inital value for cutting point
+  estResults <- optim(theta0, l0probit, d=d, method="BFGS", hessian=T) 
+ 
+  theta <- estResults$par # cutting points
+  l0 <- estResults$val    # negative likelihood
+  h <- estResults$hessian # hesiian 
+  
+  cat('\n\nRestricted parameter estimates')
+  cat('\n', theta )
+  
+  l0 <- -l0 # likelihood = (-1) x negative likelihood
+  cat('\n')
+  cat('\n Restricted log-likelihood function =     ',l0) # already n is multplied 
+  cat('\n T x restricted log-likelihood function = ',n*l0)
+
+```
+
+# Stata output for unrestriced ordered probit : (stata) oprobit y,nolog
+* stata using BFGS optimization 
+
+![stata2](nov_21_2019_unrestricted_ordered_probit_stata.jpg)
+
+# Likelihood Ratio Test
+```{r}
+
+  #  Likelihood ratio test  
+  lr <- -2*n*(l0 - l1)
+  
+  cat('\n\nLR Statistic         = ',lr)
+  cat('\np-value              = ',1-pchisq(lr,ncol(x)-1))
+  
+  cat('\n')
+  
+```
+
+# Wald Test
+```{r}
+ # Wald test  
+  r <- matrix(c(0,   0,   0,   0,   1,   0,   0,
+                0,   0,   0,   0,   0,   1,   0,
+                0,   0,   0,   0,   0,   0,   1), byrow=T, nrow=3)
+  
+  q <- rbind(0, 0, 0)
+  
+  wd <- t( r %*% theta1 - q) %*% inv(r %*% cov %*% t(r)) %*% (r %*% theta1 - q)
+  
+  cat('\nWald Statistic       = ',wd)
+  cat('\np-value              = ',1-pchisq(wd,ncol(x)-1))
+```
+
+
