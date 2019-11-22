@@ -38,6 +38,8 @@ ref: https://www.cyclismo.org/tutorial/R/pValues.html
 
 # Image Insert in R Markdown
 
+![name what you want to put as a text](image file name on your current working directory.jpg (=your picture format)
+
 
 # *optim* : General-purpose optimization (in R)
 * keep in mind that optimization method is a big matter
@@ -51,3 +53,17 @@ ref: https://www.cyclismo.org/tutorial/R/pValues.html
 * *"BFGS"* is a quasi-Newton method
 
 * *"Nelder-Mead"* Nelder and Mead (1965), that uses only function values and is robust but   relatively slow. It will work reasonably well for non-differentiable functions.
+
+
+# z-value calcuation in R
+ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/  
+(ex) in R  
+z.test.costant =  -3.858994/ 1.7103344  
+z.test.costant 
+
+
+# p-value calcuation in R
+* ref: https://www.cyclismo.org/tutorial/R/pValues.html  
+2*pnorm(-abs(z.test.costant ))
+
+
