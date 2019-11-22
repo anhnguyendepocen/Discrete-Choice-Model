@@ -58,12 +58,13 @@ ref: https://www.cyclismo.org/tutorial/R/pValues.html
 # z-value calcuation in R
 Ref: http://logisticregressionanalysis.com/1577-what-are-z-values-in-logistic-regression/  
 (ex) in R  
-z.test.costant =  -3.858994/ 1.7103344  
-z.test.costant 
+sd = 0.3381985  
+coef = 1.650514  
+(z.test.var1 =  coef/sd)  
 
 
 # p-value calcuation in R  
 Ref: https://www.cyclismo.org/tutorial/R/pValues.html    
-2*pnorm(-abs(z.test.costant))
-
-
+* options("scipen"=-100, "digits"=4) for -e format  
+* options("scipen"=100, "digits"=4) for 0.00000xxxx format  
+2*pnorm(-abs(z.test.var1 ))
