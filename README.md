@@ -9,15 +9,19 @@ Plan to do (updated: 21 Nov, 2019)
 * 1. binary probit scratch done (Done)  
 * 2. order probit scratch (Done)  
 * 2.1 Boostraping for CI in R (Oct, 2019)
-* 3. Mixed logit with mlogit for application with mlogit in R (Done)  
+* 3. Mixed logit with mlogit for application with mlogit in R (Done)    
+--------- Holding due to JMPs  
 * 3.1 mixed logit scratch with matlab (Oct, 2019)  
 * 4. mixed ordered probit scratch (when the price is log normal and error term must follow normal) with Gauss, (Oct, 2019)  
 * 4.1 latent class logit with stata lclogit, (Oct, 2019)  
-* 5. BLP (matlab, r, python(pyBLP)) (Nov, 2019)    
+* 5. BLP (matlab, r, python(pyBLP)) (Nov, 2019)    (Done with scratch and pyblp, but understanding is not perfect but later)
 * Ref: https://notes.quantecon.org/user/5cd234774174bb001a39a903  (Pyblp)
 * 6. Bayesian Discrete Choice with matlab (Nov, 2019)  
 * 6.1 Bayesian Discrete Choice with pyro (Nov, 2019)  
 * 7. VI Bayesian Discrete Choice (Dec, 2019) -- Pyro version 
+
+* I will focus on ordered response with diverse application due to JMP issues rather than the above issues
+* Critial scratch files will be in JMP folder(private)
 
 Additional work requires : Boostrap with R for CI, Wald, LM, LR test again with R.
 
